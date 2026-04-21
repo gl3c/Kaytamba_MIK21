@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DescScore AI — Оценка описаний товаров</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, sans-serif; }
+        .score-circle { background: conic-gradient(#10b981 0% calc(var(--score) * 3.6deg), #e5e7eb calc(var(--score) * 3.6deg) 360deg); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-5xl font-bold text-center text-emerald-600 mb-2">DescScore AI</h1>
+        <p class="text-center text-xl text-gray-600 mb-10">Оцениваем качество описаний товаров для маркетплейсов</p>
+
+        <div class="bg-white rounded-3xl shadow-xl p-8">
+            <textarea id="text" rows="8" class="w-full p-5 text-lg border rounded-2xl focus:outline-none focus:border-emerald-500" 
+                placeholder="Вставьте описание товара..."></textarea>
+            
+            <button onclick="evaluateDesc()" 
+                class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-2xl font-semibold rounded-3xl transition">
+                Оценить описание
+            </button>
+        </div>
+
+        <div id="result" class="hidden mt-10 bg-white rounded-3xl shadow-xl p-8">
+            <div class="flex gap-10 items-center">
+                <div id="circle" class="score-circle w-48 h-48 rounded-full flex items-center justify-center relative border-8 border-white">
+                    <div class="text-center">
+                        <div id="score" class="text-7xl font-bold text-emerald-600">8.5</div>
+                        <div class="text-xs tracking-widest">из 10</div>
+                    </div>
+                </div>
+                <div>
+                    <div id="verdict" class="text-4xl font-bold"></div>
+                    <div id="recs" class="mt-4 text-lg"></div>
+                </div>
+            </div>
+
+            <div class="mt-10 border-t pt-8">
+                <h3 class="font-semibold text-xl mb-4">Улучшенное описание:</h3>
+                <div id="improved" class="bg-emerald-50 p-6 rounded-2xl text-lg"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function evaluateDesc() {
+            const text = document.getElementById('text').value.trim();
+            if (text.length < 20) return alert("Описание слишком короткое!");
+
+            const res = await fetch('/evaluate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            });
+            const data = await res.json();
+
+            document.getElementById('score').textContent = data.score;
+            document.getElementById('circle').style.setProperty('--score', data.score * 10);
+            document.getElementById('verdict').innerHTML = data.verdict;
+            document.getElementById('recs').innerHTML = `<strong>Рекомендации:</strong><br>${data.recommendations}`;
+            document.getElementById('improved').textContent = data.improved;
+            document.getElementById('result').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
